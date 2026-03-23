@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Rhythm Game</title>
+
+  <!-- PWA (app mode) -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: black;
+      color: white;
+      font-family: Arial;
+      touch-action: none;
+    }
+
+    #game {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    .lane {
+      position: absolute;
+      bottom: 0;
+      width: 22%;
+      height: 100%;
+      border-left: 2px solid white;
+      border-right: 2px solid white;
+    }
+
+    .note {
+      position: absolute;
+      width: 100%;
+      height: 60px;
+      background: red;
+      border-radius: 8px;
+    }
+
+    .hit-zone {
+      position: absolute;
+      bottom: 80px;
+      height: 10px;
+      width: 100%;
+      background: lime;
+    }
+
+    #score {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      font-size: 18px;
+    }
+  </style>
+</head>
+
+<body>
+
+<div id="game">
+  <div id="score">Score: 0</div>
+
+  <div class="lane" style="left: 0%"></div>
+  <div class="lane" style="left: 25%"></div>
+  <div class="lane" style="left: 50%"></div>
+  <div class="lane" style="left: 75%"></div>
+
+  <div class="hit-zone"></div>
+</div>
+
+<script>
+let score = 0;
+let lanes = document.querySelectorAll(".lane");
+let activeNotes = [];
+
+function spawnNote() {
+  let laneIndex = Math.floor(Math.random() * 4);
+  let lane = lanes[laneIndex];
+
+  let note = document.createElement("div");
+  note.classList.add("note");
+  note.style.left = lane.style.left;
+
+  document.getElementById("game").appendChild(note);
+
+  activeNotes.push({ el: note, y: 0, lane: laneIndex });
+}
+
+function update() {
+  activeNotes.forEach((noteObj, index) => {
+    noteObj.y += 6;
+    noteObj.el.style.top = noteObj.y + "px";
+
+    if (noteObj.y > window.innerHeight) {
+      noteObj.el.remove();
+      activeNotes.splice(index, 1);
+    }
+  });
+
+  requestAnimationFrame(update);
+}
+
+function hit(laneIndex) {
+  activeNotes.forEach((noteObj, index) => {
+    if (
+      noteObj.lane === laneIndex &&
+      noteObj.y > window.innerHeight - 160 &&
+      noteObj.y < window.innerHeight - 60
+    ) {
+      noteObj.el.remove();
+      activeNotes.splice(index, 1);
+
+      score += 10;
+      document.getElementById("score").innerText = "Score: " + score;
+    }
+  });
+}
+
+// Controls (keyboard)
+document.addEventListener("keydown", (e) => {
+  if (e.key === "a") hit(0);
+  if (e.key === "s") hit(1);
+  if (e.key === "d") hit(2);
+  if (e.key === "f") hit(3);
+});
+
+// Controls (mobile touch)
+document.addEventListener("touchstart", (e) => {
+  let x = e.touches[0].clientX;
+  let width = window.innerWidth;
+
+  if (x < width * 0.25) hit(0);
+  else if (x < width * 0.5) hit(1);
+  else if (x < width * 0.75) hit(2);
+  else hit(3);
+});
+
+// Spawn notes
+setInterval(spawnNote, 700);
+
+// Start game loop
+update();
+</script>
+
+</body>
+</html>
